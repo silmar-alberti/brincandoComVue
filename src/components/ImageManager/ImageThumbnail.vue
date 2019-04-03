@@ -1,7 +1,9 @@
-<template>
-  <div class="card-body">
-    <canvas id="thumbnail" ref="thumbnail"> </canvas>  
-  </div>
+<template >
+  <keep-alive>
+    <div class="card-body">
+      <canvas id="thumbnail" ref="thumbnail"> </canvas>  
+    </div>
+  </keep-alive>
 </template>
 
 <script>
@@ -14,6 +16,11 @@ export default {
   },
   mounted: function () {
     this.renderThumbnail();
+  },
+  watch: { 
+    'file': function() {
+      this.renderThumbnail();
+    }
   },
   methods: {
   	renderThumbnail: function(){
@@ -30,13 +37,14 @@ export default {
       let reader = new FileReader();
       reader.onload = (e) => {
           img.src = e.target.result;
+          reader = null;
       }
       
       reader.readAsDataURL(this.file);
 
     },
     calcThumbnailSize: function(img){
-    	const thumbnailSize = 1000;
+    	const thumbnailSize = 400;
     	const proportion = img.height / img.width  ;
     	return {
     		width: thumbnailSize,
@@ -50,26 +58,38 @@ export default {
     	return canvas;
     },
     resizeImage: function(image, canvas){
-		const pica = Pica({ features: [
-				'cib',
-         'wasm', 
-         'js'
-			] });
-		
-		var startTime = Date.now();
-    	pica.resize(image, canvas, {
-		  quality: 1,
-		  transferable: true
-		}).then(() => {
-			let executionTime = (Date.now() - startTime).toFixed(2);
-    		console.log("tempo de execução:"+executionTime);
-    	})
-    	.catch(() => {
-    		console.log("deu ruim");
-    		canvas.drawImage(image,0,0);
-    	});
+  		this.doResize(this.createPica(), image, canvas).then(() => {
+        image = null;
+        pica = image;
+      	console.log("tempo de execução:"+(Date.now() - startTime).toFixed(2));
+      })
+      .catch((e) => {
+      		console.log("deu ruim");
+          console.error(e);
+          image = null;
+          pica = image ;
+      	});
+    },
 
-    }
+    createPica: () => {
+      return Pica({
+       features: [
+          'cib',
+           'wasm', 
+           'js'
+        ],
+        idle: 0,
+      });
+    }, 
+    doResize: (pica, image, canvas) => {
+      
+      
+      const startTime = Date.now();
+      return pica.resize(image, canvas, {
+        quality: 2,
+        transferable: true
+      });
+    },
     
   }
 }

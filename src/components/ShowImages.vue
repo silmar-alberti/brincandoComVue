@@ -21,8 +21,7 @@ export default {
   },
   methods: {
     onFilesChange: function(e){
-      const files = e.target.files || e.dataTransfer.files;
-      // this.$data.files =  this.$refs.inputFile.files;
+      let files = e.target.files || e.dataTransfer.files;
       this.$data.files =  files;
     }
   }
