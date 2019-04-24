@@ -9,10 +9,15 @@ const pica = Pica({
    features: [
       'cib',
        'wasm', 
-       'js'
+       'js',
+       // 'ww'
     ],
     idle: 0,
   });
+
+let imageId = 0;
+let renderQueue = [];
+let renderStatus = false;
 
 function calcThumbnailSize(img){
   const thumbnailSize = 400;
@@ -26,7 +31,7 @@ function calcThumbnailSize(img){
 
 async function resizeImage(image, canvas){
   await doResize(image, canvas);
-  image = false;
+  image = null;
 };
 
 function doResize(image, canvas) {
@@ -44,25 +49,54 @@ function loadImage(file) {
     
     reader.onload = (e) => {
         img.src = e.target.result;
-        reader = false;
-        e = false;
+        reader = null;
+        e = null;
     }
     
     reader.readAsDataURL(file);
  
   });
 };
+async function renderThumbnail(canvas, file){
+    const img = await loadImage(file);        
+
+    const size = calcThumbnailSize(img);
+    canvas.width = size.width;
+    canvas.height = size.height;
+    
+    await resizeImage(img, canvas);        
+};
+
+async function runRender(){
+    if (renderStatus || renderQueue.length == 0) {
+      return;
+    }
+    renderStatus = true;
+    let startTime = Date.now();
+    while (renderQueue.length){
+      let obj = renderQueue.shift();
+      await renderThumbnail(obj.canvas, obj.file);
+
+      obj = null;
+    }
+
+    console.log(`renderizou ${imageId} imagens em: ` + (Date.now() - startTime).toFixed(2));
+
+    renderStatus = false;
+}
+
 
 
 export default {
-     async renderThumbnail(canvas, file){
-        const img = await loadImage(file);        
+    addToQueue(canvas, file){
+        renderQueue.push({
+          canvas: canvas,
+          file: file,
+          imageId: imageId++
+        });
 
-        const size = calcThumbnailSize(img);
-        canvas.width = size.width;
-        canvas.height = size.height;
-        
-        await resizeImage(img, canvas);        
+        // console.log('adicionou '+ imageId + ' na fila');  
+        runRender();
     },
    
 }

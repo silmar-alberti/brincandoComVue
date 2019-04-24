@@ -25,8 +25,7 @@ export default {
   methods: {
     renderThumbnail: async function(){
       let canvas = this.$refs.thumbnail;
-      await ResizeImage.renderThumbnail(canvas, this.file);
-      
+      ResizeImage.addToQueue(canvas, this.file);
     },
   }
 }
