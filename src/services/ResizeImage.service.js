@@ -1,7 +1,9 @@
 import Pica from 'pica';
-
-var startTime = Date.now();
-var number = 0;
+const picaResizeSettings = {
+    quality: 2,
+    transferable: true,
+    unsharpRadius: 0
+  };
 
 const pica = Pica({
    features: [
@@ -9,7 +11,7 @@ const pica = Pica({
        'wasm', 
        'js'
     ],
-    idle: 1000,
+    idle: 0,
   });
 
 function calcThumbnailSize(img){
@@ -21,59 +23,46 @@ function calcThumbnailSize(img){
   }
   
 };
-function openImageOnCanvas(image) {
-  var canvas = document.createElement('canvas');
-  canvas.getContext('2d').drawImage(image,0,0);
-  return canvas;
-};
+
 async function resizeImage(image, canvas){
-  await doResize(pica, image, canvas);
-  // .then(() => {
-  //   image = false;
-  //   console.log("tempo de execução:"+(Date.now() - startTime).toFixed(2));
-  // })
-  // .catch((e) => {
-  //     console.log("deu ruim");
-  //     console.error(e);
-  //     image = false;
-  //   });
+  await doResize(image, canvas);
   image = false;
 };
 
-function doResize(pica, image, canvas) {
-  startTime = Date.now();
-  return pica.resize(image, canvas, {
-    quality: 2,
-    transferable: true
-  });
+function doResize(image, canvas) {
+  return pica.resize(image, canvas, picaResizeSettings);
 };
  
+function loadImage(file) {
+  return new Promise(resolve => {
+    let img = new Image();
+    let reader = new FileReader();
+
+    img.addEventListener("load",() => {
+      resolve(img);
+    },false);
+    
+    reader.onload = (e) => {
+        img.src = e.target.result;
+        reader = false;
+        e = false;
+    }
+    
+    reader.readAsDataURL(file);
+ 
+  });
+};
+
 
 export default {
-    async renderThumbnail(canvas, file){
-      const self = this;
-      const imageNumber = ++number;
+     async renderThumbnail(canvas, file){
+        const img = await loadImage(file);        
 
-  		let img = new Image();
-  		img.addEventListener("load",() => {
         const size = calcThumbnailSize(img);
-  			canvas.width = size.width;
-  			canvas.height = size.height;
-        console.log('começou imagem: '+ imageNumber);
-  			resizeImage(img, canvas);
-        console.log('processou imagem: '+ imageNumber);
-  		},false);
-
-      console.log('definiu carregamento imagem:' + imageNumber);
-      let reader = new FileReader();
-      reader.onload = (e) => {
-          img.src = e.target.result;
-          reader = null;
-      }
-      
-      await reader.readAsDataURL(file);
-      console.log('finalizou processamento imagem:' + imageNumber);
-
+        canvas.width = size.width;
+        canvas.height = size.height;
+        
+        await resizeImage(img, canvas);        
     },
    
 }

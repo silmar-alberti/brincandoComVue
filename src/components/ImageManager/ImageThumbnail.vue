@@ -23,10 +23,10 @@ export default {
   //   }
   // },
   methods: {
-    renderThumbnail: function(){
+    renderThumbnail: async function(){
       let canvas = this.$refs.thumbnail;
-      console.log('solicitado geração da miniatura');
-      ResizeImage.renderThumbnail(canvas, this.file);
+      await ResizeImage.renderThumbnail(canvas, this.file);
+      
     },
   }
 }
